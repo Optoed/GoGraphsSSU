@@ -1,0 +1,11 @@
+{
+  "isDirected": false,
+  "adjList": {
+    "A": {
+      "B": 10
+    },
+    "B": {
+      "A": 10
+    }
+  }
+}

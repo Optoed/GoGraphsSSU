@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 )
@@ -34,9 +35,7 @@ func NewGraphCopy(g Graph) *Graph {
 
 const resourcesDir = "C:\\Users\\User\\Desktop\\Вуз домашка\\GraphsGoSSU\\resources\\"
 
-func NewGraphFromFile(filename string, isDirected bool) (*Graph, error) {
-	graph := NewEmptyGraph(isDirected)
-
+func NewGraphFromFileJSON(filename string) (*Graph, error) {
 	filePath := resourcesDir + filename
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -44,23 +43,25 @@ func NewGraphFromFile(filename string, isDirected bool) (*Graph, error) {
 	}
 	defer file.Close()
 
-	var v, u string
-	var weight int
-	for {
-		_, err := fmt.Fscanf(file, "%s %s %d\n", &u, &v, &weight)
-		if err != nil {
-			if err.Error() == "EOF" {
-				break // Корректное завершение при достижении конца файла
-			}
-			return nil, err
-		}
-		graph.AddEdge(u, v, weight)
+	// Структура для временного хранения данных
+	var data struct {
+		IsDirected bool                      `json:"isDirected"`
+		AdjList    map[string]map[string]int `json:"adjList"`
 	}
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&data)
+	if err != nil {
+		return nil, err
+	}
+
+	graph := NewEmptyGraph(data.IsDirected)
+	graph.adjList = data.AdjList
 
 	return graph, nil
 }
 
-func (g *Graph) SaveToFile(filename string) error {
+func (g *Graph) SaveToFileJSON(filename string) error {
 	filePath := resourcesDir + filename
 	file, err := os.Create(filePath)
 	if err != nil {
@@ -68,11 +69,23 @@ func (g *Graph) SaveToFile(filename string) error {
 	}
 	defer file.Close()
 
-	for u, neighbors := range g.adjList {
-		for v, weight := range neighbors {
-			fmt.Fprintf(file, "%s %s %d\n", u, v, weight)
-		}
+	// Структура для сериализации
+	data := struct {
+		IsDirected bool                      `json:"isDirected"`
+		AdjList    map[string]map[string]int `json:"adjList"`
+	}{
+		IsDirected: g.isDirected,
+		AdjList:    g.adjList,
 	}
+
+	// Сериализуем граф в JSON
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ") // Пустая строка для начала и два пробела для отступов
+	err = encoder.Encode(data)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -105,8 +118,9 @@ func (g *Graph) RemoveEdge(v, u string) {
 	}
 }
 
-// Вывод списка смежности в консоль
+// PrintAdjList Вывод списка смежности в консоль
 func (g *Graph) PrintAdjList() {
+	fmt.Println("isDirected :", g.isDirected)
 	for u, neighbors := range g.adjList {
 		fmt.Printf("%s -> ", u)
 		for v, weight := range neighbors {

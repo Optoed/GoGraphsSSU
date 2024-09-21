@@ -21,12 +21,12 @@ func StartCLI() {
 		fmt.Println("2. switch_graph <graphID>")
 		fmt.Println("3. copy_graph <fromGraphID>")
 		fmt.Println("4. add_vertex <name>")
-		fmt.Println("5. add_edge <vertex1> <vertex2> <weight>")
+		fmt.Println("5. add_edge <vertex1> <vertex2> <weight (for an unweighted graph weight = 1)>")
 		fmt.Println("6. remove_vertex <name>")
 		fmt.Println("7. remove_edge <vertex1> <vertex2>")
 		fmt.Println("8. print_graph")
-		fmt.Println("9. save_to_file <filename>")
-		fmt.Println("10. load_from_file <filename> <isDirected>")
+		fmt.Println("9. save_to_file <filename.json>")
+		fmt.Println("10. load_from_file <filename.json>")
 		fmt.Println("11. list_graphs")
 		fmt.Println("12. exit")
 
@@ -104,7 +104,7 @@ func StartCLI() {
 		case strings.HasPrefix(command, "save_to_file"):
 			parts := strings.Split(command, " ")
 			filename := parts[1]
-			err := graphs[activeGraphID].SaveToFile(filename)
+			err := graphs[activeGraphID].SaveToFileJSON(filename)
 			if err != nil {
 				fmt.Println("Ошибка при сохранении файла:", err)
 			} else {
@@ -114,8 +114,7 @@ func StartCLI() {
 		case strings.HasPrefix(command, "load_from_file"):
 			parts := strings.Split(command, " ")
 			filename := parts[1]
-			isDirected := parts[2] == "true"
-			newGraph, err := NewGraphFromFile(filename, isDirected)
+			newGraph, err := NewGraphFromFileJSON(filename)
 			if err != nil {
 				fmt.Println("Ошибка при загрузке файла:", err)
 			} else {
