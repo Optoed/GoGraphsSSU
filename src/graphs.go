@@ -120,7 +120,7 @@ func (g *Graph) RemoveEdge(v, u string) {
 
 // PrintAdjList Вывод списка смежности в консоль
 func (g *Graph) PrintAdjList() {
-	fmt.Println("isDirected :", g.isDirected)
+	fmt.Println("isDirected (Ориентированный?) :", g.isDirected)
 	for u, neighbors := range g.adjList {
 		fmt.Printf("%s -> ", u)
 		for v, weight := range neighbors {
