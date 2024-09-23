@@ -129,3 +129,19 @@ func (g *Graph) PrintAdjList() {
 		fmt.Println()
 	}
 }
+
+// CheckVertex2 task 2: adj list la 2
+// Определить, существует ли вершина, в которую есть дуга из вершины u, но нет из v. Вывести такую вершину.
+func (g *Graph) VerticesFromUAndNotFromV(u, v string) (bool, []string) {
+	verticesList := make([]string, 0)
+	for vertex, _ := range g.adjList[u] {
+		if _, exist := g.adjList[v][vertex]; !exist {
+			verticesList = append(verticesList, vertex)
+		}
+	}
+
+	if len(verticesList) == 0 {
+		return false, nil
+	}
+	return true, verticesList
+}
