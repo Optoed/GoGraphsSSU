@@ -28,7 +28,9 @@ func StartCLI() {
 		fmt.Println("9. save_to_file <filename.json>")
 		fmt.Println("10. load_from_file <filename.json>")
 		fmt.Println("11. list_graphs")
-		fmt.Println("12. exit")
+		//task 2: adj list la 2, point 18:
+		fmt.Println("12. vertices_from_u_and_not_from_v <vertex U> <vertex V>")
+		fmt.Println("13. exit")
 
 		fmt.Print("\nВведите команду: ")
 		command, _ := reader.ReadString('\n')
@@ -49,6 +51,10 @@ func StartCLI() {
 
 		case strings.HasPrefix(command, "switch_graph"):
 			parts := strings.Split(command, " ")
+			if len(parts) != 2 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
 			graphID, err := strconv.Atoi(parts[1])
 			if err != nil || graphs[graphID] == nil {
 				fmt.Println("Неверный ID графа.")
@@ -59,6 +65,10 @@ func StartCLI() {
 
 		case strings.HasPrefix(command, "copy_graph"):
 			parts := strings.Split(command, " ")
+			if len(parts) != 2 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
 			fromGraphID, err := strconv.Atoi(parts[1])
 			if err != nil || graphs[fromGraphID] == nil {
 				fmt.Println("Неверный ID графа.")
@@ -71,12 +81,20 @@ func StartCLI() {
 
 		case strings.HasPrefix(command, "add_vertex"):
 			parts := strings.Split(command, " ")
+			if len(parts) != 2 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
 			vertex := parts[1]
 			graphs[activeGraphID].AddVertex(vertex)
 			fmt.Println("Вершина добавлена:", vertex)
 
 		case strings.HasPrefix(command, "add_edge"):
 			parts := strings.Split(command, " ")
+			if len(parts) != 4 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
 			v1, v2 := parts[1], parts[2]
 			weight, err := strconv.Atoi(parts[3])
 			if err != nil {
@@ -88,12 +106,20 @@ func StartCLI() {
 
 		case strings.HasPrefix(command, "remove_vertex"):
 			parts := strings.Split(command, " ")
+			if len(parts) != 2 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
 			vertex := parts[1]
 			graphs[activeGraphID].RemoveVertex(vertex)
 			fmt.Println("Вершина удалена:", vertex)
 
 		case strings.HasPrefix(command, "remove_edge"):
 			parts := strings.Split(command, " ")
+			if len(parts) != 3 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
 			v1, v2 := parts[1], parts[2]
 			graphs[activeGraphID].RemoveEdge(v1, v2)
 			fmt.Println("Ребро удалено:", v1, v2)
@@ -103,6 +129,10 @@ func StartCLI() {
 
 		case strings.HasPrefix(command, "save_to_file"):
 			parts := strings.Split(command, " ")
+			if len(parts) != 2 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
 			filename := parts[1]
 			err := graphs[activeGraphID].SaveToFileJSON(filename)
 			if err != nil {
@@ -113,6 +143,10 @@ func StartCLI() {
 
 		case strings.HasPrefix(command, "load_from_file"):
 			parts := strings.Split(command, " ")
+			if len(parts) != 2 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
 			filename := parts[1]
 			newGraph, err := NewGraphFromFileJSON(filename)
 			if err != nil {
@@ -127,6 +161,25 @@ func StartCLI() {
 		case strings.HasPrefix(command, "list_graphs"):
 			for id := range graphs {
 				fmt.Println("Граф ID:", id)
+			}
+
+		case strings.HasPrefix(command, "vertices_from_u_and_not_from_v"):
+			parts := strings.Split(command, " ")
+			if len(parts) != 3 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
+			vertexU, vertexV := parts[1], parts[2]
+			exist, verticesFromUAndNotFromV := graphs[activeGraphID].VerticesFromUAndNotFromV(vertexU, vertexV)
+			if !exist {
+				fmt.Printf("Нет ни одной такой вершины в графе с id = %d,"+
+					" в которую есть дуга из вершины %s, но нет из %s\n",
+					activeGraphID, vertexU, vertexV)
+			} else {
+				fmt.Printf("Найдены следующие вершины в графе с id = %d,"+
+					" в которые есть дуга из вершины %s, но нет из %s:\n",
+					activeGraphID, vertexU, vertexV)
+				fmt.Println(verticesFromUAndNotFromV)
 			}
 
 		case command == "exit":
