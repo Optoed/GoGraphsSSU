@@ -30,7 +30,9 @@ func StartCLI() {
 		fmt.Println("11. list_graphs")
 		//task 2: adj list la 2, point 18:
 		fmt.Println("12. vertices_from_u_and_not_from_v <vertex U> <vertex V>")
-		fmt.Println("13. exit")
+		//task 3: adj list la 3, point 6:
+		fmt.Println("13. print_hanging_vertices")
+		fmt.Println("14. exit")
 
 		fmt.Print("\nВведите команду: ")
 		command, _ := reader.ReadString('\n')
@@ -180,6 +182,15 @@ func StartCLI() {
 					" в которые есть дуга из вершины %s, но нет из %s:\n",
 					activeGraphID, vertexU, vertexV)
 				fmt.Println(verticesFromUAndNotFromV)
+			}
+
+		case strings.HasPrefix(command, "print_hanging_vertices"):
+			exist, hangingVertices := graphs[activeGraphID].HangingVertices()
+			if !exist {
+				fmt.Println("В графе отсутствуют висячие вершины графа (степени 1).")
+			} else {
+				fmt.Println("Все висячие вершины графа (степени 1):")
+				fmt.Println(hangingVertices)
 			}
 
 		case command == "exit":

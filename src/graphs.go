@@ -130,7 +130,7 @@ func (g *Graph) PrintAdjList() {
 	}
 }
 
-// CheckVertex2 task 2: adj list la 2
+// VerticesFromUAndNotFromV task 2: adj list la 2
 // Определить, существует ли вершина, в которую есть дуга из вершины u, но нет из v. Вывести такую вершину.
 func (g *Graph) VerticesFromUAndNotFromV(u, v string) (bool, []string) {
 	verticesList := make([]string, 0)
@@ -144,4 +144,32 @@ func (g *Graph) VerticesFromUAndNotFromV(u, v string) (bool, []string) {
 		return false, nil
 	}
 	return true, verticesList
+}
+
+// task 3 la: option 6
+// Print all hanging vertices of the graph (of degree 1).
+func (g *Graph) HangingVertices() (bool, []string) {
+	hangingVertices := make([]string, 0)
+	cntNeighbours := make(map[string]int)
+
+	for u, neighbours := range g.adjList {
+		cntNeighbours[u] += len(neighbours)
+		if !g.isDirected {
+			continue
+		}
+		for v := range neighbours {
+			cntNeighbours[v]++
+		}
+	}
+
+	for u, cnt := range cntNeighbours {
+		if cnt == 1 {
+			hangingVertices = append(hangingVertices, u)
+		}
+	}
+
+	if len(hangingVertices) == 0 {
+		return false, nil
+	}
+	return true, hangingVertices
 }
