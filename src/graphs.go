@@ -173,3 +173,18 @@ func (g *Graph) HangingVertices() (bool, []string) {
 	}
 	return true, hangingVertices
 }
+
+// task4 : is g a subgraph of otherG
+func (g *Graph) isSubgraphOf(otherG *Graph) bool {
+	for v, neighbours := range g.adjList {
+		if _, existVertex := otherG.adjList[v]; !existVertex {
+			return false
+		}
+		for u, _ := range neighbours {
+			if _, existEdge := otherG.adjList[v][u]; !existEdge {
+				return false
+			}
+		}
+	}
+	return true
+}

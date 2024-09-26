@@ -32,7 +32,9 @@ func StartCLI() {
 		fmt.Println("12. vertices_from_u_and_not_from_v <vertex U> <vertex V>")
 		//task 3: adj list la 3, point 6:
 		fmt.Println("13. print_hanging_vertices")
-		fmt.Println("14. exit")
+		//task4: is g a subgraph of otherG
+		fmt.Println("14. is_subgraph_of <ofOtherGraphID>")
+		fmt.Println("15. exit")
 
 		fmt.Print("\nВведите команду: ")
 		command, _ := reader.ReadString('\n')
@@ -191,6 +193,27 @@ func StartCLI() {
 			} else {
 				fmt.Println("Все висячие вершины графа (степени 1):")
 				fmt.Println(hangingVertices)
+			}
+
+		case strings.HasPrefix(command, "is_subgraph_of"):
+			parts := strings.Split(command, " ")
+			if len(parts) != 2 {
+				fmt.Println("Неверный формат команды.")
+				continue
+			}
+			otherGraphId, err := strconv.Atoi(parts[1])
+			if err != nil {
+				fmt.Println("Неверно указан ID другого графа")
+				continue
+			}
+			if graphs[activeGraphID].isSubgraphOf(graphs[otherGraphId]) {
+				fmt.Printf("Да, текущий (active) граф с ID = %d является подграфом другого графа с ID = %d"+
+					" (то есть все вершины и ребра графа текущего графа с ID = %d присутствуют в графе c ID = %d\n",
+					activeGraphID, otherGraphId, activeGraphID, otherGraphId)
+			} else {
+				fmt.Printf("Нет, текущий (active) граф с ID = %d НЕ является подграфом другого графа с ID = %d"+
+					" (то есть НЕ все вершины и ребра графа текущего графа с ID = %d присутствуют в графе c ID = %d\n",
+					activeGraphID, otherGraphId, activeGraphID, otherGraphId)
 			}
 
 		case command == "exit":
