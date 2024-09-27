@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -9,12 +10,14 @@ import (
 type Graph struct {
 	adjList    map[string]map[string]int
 	isDirected bool
+	used       map[string]bool
 }
 
 func NewEmptyGraph(directed bool) *Graph {
 	return &Graph{
 		adjList:    make(map[string]map[string]int),
 		isDirected: directed,
+		used:       make(map[string]bool),
 	}
 }
 
@@ -187,4 +190,82 @@ func (g *Graph) isSubgraphOf(otherG *Graph) bool {
 		}
 	}
 	return true
+}
+
+func (g *Graph) dfs(v string) {
+	g.used[v] = true
+	for u := range g.adjList[v] {
+		if !g.used[u] {
+			g.dfs(u)
+		}
+	}
+}
+
+func (g *Graph) countLinkedComponents() int {
+	g.used = make(map[string]bool)
+	cnt := 0
+	for v := range g.adjList {
+		if !g.used[v] {
+			cnt++
+			g.dfs(v)
+		}
+	}
+	return cnt
+}
+
+func (g *Graph) countVerticesAndEdges() (int, int) {
+	cntVertices, cntEdges := 0, 0
+	for _, neighbours := range g.adjList {
+		cntEdges++
+		cntVertices += len(neighbours)
+	}
+	return cntVertices, cntEdges
+}
+
+// 19.	Проверить, можно ли из графа удалить какую-либо вершину так, чтобы получилось дерево.
+func (g *Graph) isAlmostTree() bool {
+	if g.countLinkedComponents() > 2 {
+		return false
+	}
+	for v := range g.adjList {
+		gCopy := NewGraphCopy(*g)
+		gCopy.RemoveVertex(v)
+		vertices, edges := g.countVerticesAndEdges()
+		if vertices == edges+1 && g.countLinkedComponents() == 1 {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Graph) isWithoutCycles(v string) bool {
+	g.used[v] = true
+	for u := range g.adjList[v] {
+		if !g.used[u] {
+			g.isWithoutCycles(u)
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
+// 22.	* Проверить, является ли орграф деревом, или лесом, или не является ни тем, ни другим.
+func (g *Graph) isDirectedGraphTheTreeOrForest() (string, error) {
+	if !g.isDirected {
+		return "", errors.New("graph is not directed (граф не ориентированный)")
+	}
+
+	vertices, edges := g.countVerticesAndEdges()
+	if g.countLinkedComponents() == 1 && vertices == edges+1 {
+		return "Tree", nil
+	}
+
+	g.used = make(map[string]bool)
+	for v := range g.adjList {
+		if !g.used[v] {
+			if g.isWithoutCycles(v)
+		}
+	}
+
 }
