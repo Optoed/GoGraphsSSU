@@ -34,7 +34,9 @@ func StartCLI() {
 		fmt.Println("13. print_hanging_vertices")
 		//task4: is g a subgraph of otherG
 		fmt.Println("14. is_subgraph_of <ofOtherGraphID>")
-		fmt.Println("15. exit")
+		//task5: can get a tree if erase one vertex from graph (with dfs)
+		fmt.Println("15. is_almost_tree")
+		fmt.Println("18. exit")
 
 		fmt.Print("\nВведите команду: ")
 		command, _ := reader.ReadString('\n')
@@ -214,6 +216,18 @@ func StartCLI() {
 				fmt.Printf("Нет, текущий (active) граф с ID = %d НЕ является подграфом другого графа с ID = %d"+
 					" (то есть НЕ все вершины и ребра графа текущего графа с ID = %d присутствуют в графе c ID = %d\n",
 					activeGraphID, otherGraphId, activeGraphID, otherGraphId)
+			}
+
+		case strings.HasPrefix(command, "is_almost_graph"):
+			res, err := graphs[activeGraphID].isAlmostTree()
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			if res {
+				fmt.Println("Yes, we can delete one vertex and make a tree")
+			} else {
+				fmt.Println("No, we can't")
 			}
 
 		case command == "exit":

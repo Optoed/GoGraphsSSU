@@ -201,7 +201,7 @@ func (g *Graph) dfs(v string) {
 	}
 }
 
-func (g *Graph) countLinkedComponents() int {
+func (g *Graph) countConnectedComponents() int {
 	g.used = make(map[string]bool)
 	cnt := 0
 	for v := range g.adjList {
@@ -223,19 +223,22 @@ func (g *Graph) countVerticesAndEdges() (int, int) {
 }
 
 // 19.	Проверить, можно ли из графа удалить какую-либо вершину так, чтобы получилось дерево.
-func (g *Graph) isAlmostTree() bool {
-	if g.countLinkedComponents() > 2 {
-		return false
+func (g *Graph) isAlmostTree() (bool, error) {
+	if g.isDirected == true {
+		return false, errors.New("graph is directed")
+	}
+	if g.countConnectedComponents() > 2 {
+		return false, errors.New("too much connected components")
 	}
 	for v := range g.adjList {
 		gCopy := NewGraphCopy(*g)
 		gCopy.RemoveVertex(v)
 		vertices, edges := g.countVerticesAndEdges()
-		if vertices == edges+1 && g.countLinkedComponents() == 1 {
-			return true
+		if vertices == edges+1 && g.countConnectedComponents() == 1 {
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 func (g *Graph) isWithoutCycles(v string) bool {
@@ -256,16 +259,27 @@ func (g *Graph) isDirectedGraphTheTreeOrForest() (string, error) {
 		return "", errors.New("graph is not directed (граф не ориентированный)")
 	}
 
-	vertices, edges := g.countVerticesAndEdges()
-	if g.countLinkedComponents() == 1 && vertices == edges+1 {
-		return "Tree", nil
-	}
-
-	g.used = make(map[string]bool)
-	for v := range g.adjList {
-		if !g.used[v] {
-			if g.isWithoutCycles(v)
+	roots := make([]string, 0)
+	for root := range g.adjList {
+		isRoot := true
+		for other := range g.adjList {
+			if _, existEdge := g.adjList[other][root]; existEdge {
+				isRoot = false
+				break
+			}
+		}
+		if isRoot {
+			roots = append(roots, root)
 		}
 	}
 
+	vertices, edges := g.countVerticesAndEdges()
+	if len(roots) == 1 && g.countConnectedComponents() == 1 && vertices == edges+1 {
+		return "Tree", nil
+	}
+
+	//for root := range roots {
+	//
+	//}
+	return "", nil
 }
