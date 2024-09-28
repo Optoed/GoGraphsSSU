@@ -241,13 +241,32 @@ func (g *Graph) isAlmostTree() (bool, error) {
 	return false, nil
 }
 
-func (g *Graph) isWithoutCycles(v string) bool {
+func (g *Graph) isWithoutCyclesDFS(v string) bool {
 	g.used[v] = true
 	for u := range g.adjList[v] {
 		if !g.used[u] {
-			g.isWithoutCycles(u)
+			g.isWithoutCyclesDFS(u)
 		} else {
 			return false
+		}
+	}
+	return true
+}
+
+func (g *Graph) isWithoutCyclesBFS(v string) bool {
+	g.used[v] = true
+	queue := make([]string, 0)
+	queue = append(queue, v)
+	for len(queue) > 0 {
+		from := queue[0]
+		queue = queue[1:]
+		for u := range g.adjList[from] {
+			if !g.used[u] {
+				g.used[u] = true
+				queue = append(queue, u)
+			} else {
+				return false
+			}
 		}
 	}
 	return true
@@ -280,7 +299,7 @@ func (g *Graph) isDirectedGraphTheTreeOrForest() (string, error) {
 
 	g.used = make(map[string]bool)
 	for _, root := range roots {
-		if !g.isWithoutCycles(root) {
+		if !g.isWithoutCyclesBFS(root) {
 			return "Not a tree and not a forest", nil
 		}
 	}
