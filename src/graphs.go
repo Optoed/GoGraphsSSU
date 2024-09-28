@@ -278,8 +278,11 @@ func (g *Graph) isDirectedGraphTheTreeOrForest() (string, error) {
 		return "Tree", nil
 	}
 
-	//for root := range roots {
-	//
-	//}
-	return "", nil
+	g.used = make(map[string]bool)
+	for _, root := range roots {
+		if !g.isWithoutCycles(root) {
+			return "Not a tree and not a forest", nil
+		}
+	}
+	return "Forest", nil
 }

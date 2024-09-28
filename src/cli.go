@@ -35,7 +35,9 @@ func StartCLI() {
 		//task4: is g a subgraph of otherG
 		fmt.Println("14. is_subgraph_of <ofOtherGraphID>")
 		//task5: can get a tree if erase one vertex from graph (with dfs)
-		fmt.Println("15. is_almost_tree")
+		fmt.Println("15. is_almost_tree"
+		//task6: is directed Graph is a tree or is a forest (TODO: with bfs)
+		fmt.Println("16. is_dirgraph_tree_or_forest")
 		fmt.Println("18. exit")
 
 		fmt.Print("\nВведите команду: ")
@@ -229,6 +231,14 @@ func StartCLI() {
 			} else {
 				fmt.Println("No, we can't")
 			}
+
+		case strings.HasPrefix(command, "is_dirgraph_tree_or_forest"):
+			res, err := graphs[activeGraphID].isDirectedGraphTheTreeOrForest()
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fmt.Println(res)
 
 		case command == "exit":
 			fmt.Println("Завершение программы.")
