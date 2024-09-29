@@ -1,9 +1,11 @@
 package main
 
 import (
+	"container/heap"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 )
 
@@ -11,6 +13,7 @@ type Graph struct {
 	adjList    map[string]map[string]int
 	isDirected bool
 	used       map[string]bool
+	minEdge    map[string]int
 }
 
 func NewEmptyGraph(directed bool) *Graph {
@@ -18,6 +21,21 @@ func NewEmptyGraph(directed bool) *Graph {
 		adjList:    make(map[string]map[string]int),
 		isDirected: directed,
 		used:       make(map[string]bool),
+		minEdge:    make(map[string]int),
+	}
+}
+
+func (g *Graph) UsedClear() {
+	g.used = make(map[string]bool)
+}
+
+func (g *Graph) MinEdgeClear() {
+	g.minEdge = make(map[string]int)
+}
+
+func (g *Graph) minEdgeMakeDistInfinity() {
+	for v := range g.adjList {
+		g.minEdge[v] = math.MaxInt
 	}
 }
 
@@ -241,18 +259,6 @@ func (g *Graph) isAlmostTree() (bool, error) {
 	return false, nil
 }
 
-func (g *Graph) isWithoutCyclesDFS(v string) bool {
-	g.used[v] = true
-	for u := range g.adjList[v] {
-		if !g.used[u] {
-			g.isWithoutCyclesDFS(u)
-		} else {
-			return false
-		}
-	}
-	return true
-}
-
 func (g *Graph) isWithoutCyclesBFS(v string) bool {
 	g.used[v] = true
 	queue := make([]string, 0)
@@ -304,4 +310,79 @@ func (g *Graph) isDirectedGraphTheTreeOrForest() (string, error) {
 		}
 	}
 	return "Forest", nil
+}
+
+type Item struct {
+	vertex string
+	weight int
+}
+
+type PriorityQueue []Item
+
+func (pq PriorityQueue) Len() int { return len(pq) }
+func (pq PriorityQueue) Less(i, j int) bool {
+	return pq[i].weight < pq[j].weight
+}
+func (pq PriorityQueue) Swap(i, j int) { pq[i], pq[j] = pq[j], pq[i] }
+
+func (pq *PriorityQueue) Push(x interface{}) {
+	item := x.(Item)
+	*pq = append(*pq, item)
+}
+
+func (pq *PriorityQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	*pq = old[0 : n-1]
+	return item
+}
+
+// MSTPrime => task 7: Каркас III
+// Дан взвешенный неориентированный граф из N вершни и M ребер. Найти MST с помощью алгоритма Прима
+func (g *Graph) MSTPrime() (*Graph, int, error) {
+	if g.isDirected {
+		return nil, -1, errors.New("graph is directed")
+	}
+
+	g.UsedClear()
+	g.MinEdgeClear()
+	g.minEdgeMakeDistInfinity()
+	var start string
+	for v := range g.adjList {
+		start = v
+		g.used[start] = true
+		g.minEdge[start] = 0
+		break
+	}
+
+	totalWeight := 0
+	MST := NewEmptyGraph(false)
+	pq := &PriorityQueue{}
+	heap.Init(pq)
+	heap.Push(pq, Item{vertex: start, weight: 0})
+	fromVertex := ""
+
+	for pq.Len() > 0 {
+		item := pq.Pop().(Item)
+		if g.used[item.vertex] {
+			continue
+		}
+		toVertex := item.vertex
+		g.used[item.vertex] = true
+		totalWeight += item.weight
+		if fromVertex != "" {
+			MST.AddEdge(fromVertex, toVertex, item.weight)
+		}
+		fromVertex = item.vertex
+
+		for to, w := range g.adjList[item.vertex] {
+			if !g.used[to] && w < g.minEdge[to] {
+				g.minEdge[to] = w
+				pq.Push(Item{vertex: to, weight: w})
+			}
+		}
+	}
+
+	return MST, totalWeight, nil
 }

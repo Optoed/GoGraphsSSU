@@ -35,9 +35,11 @@ func StartCLI() {
 		//task4: is g a subgraph of otherG
 		fmt.Println("14. is_subgraph_of <ofOtherGraphID>")
 		//task5: can get a tree if erase one vertex from graph (with dfs)
-		fmt.Println("15. is_almost_tree"
-		//task6: is directed Graph is a tree or is a forest (TODO: with bfs)
+		fmt.Println("15. is_almost_tree")
+		//task6: is directed Graph is a tree or is a forest
 		fmt.Println("16. is_dirgraph_tree_or_forest")
+		//task7: MST with Prime's algorithm
+		fmt.Println("17. mst <undirected_graphID")
 		fmt.Println("18. exit")
 
 		fmt.Print("\nВведите команду: ")
@@ -239,6 +241,15 @@ func StartCLI() {
 				continue
 			}
 			fmt.Println(res)
+
+		case strings.HasPrefix(command, "mst"):
+			mst, totalWeight, err := graphs[activeGraphID].MSTPrime()
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fmt.Printf("mst with total weight = %d:\n", totalWeight)
+			mst.PrintAdjList()
 
 		case command == "exit":
 			fmt.Println("Завершение программы.")
