@@ -1,13 +1,15 @@
 package main
 
 import (
-	"container/heap"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jupp0r/go-priority-queue"
 	"math"
 	"os"
 )
+
+const resourcesDir = "C:\\Users\\User\\Desktop\\SSUhomework\\GraphsGoSSU\\resources\\"
 
 type Graph struct {
 	adjList    map[string]map[string]int
@@ -53,8 +55,6 @@ func NewGraphCopy(g Graph) *Graph {
 
 	return newGraph
 }
-
-const resourcesDir = "C:\\Users\\User\\Desktop\\Вуз домашка\\GraphsGoSSU\\resources\\"
 
 func NewGraphFromFileJSON(filename string) (*Graph, error) {
 	filePath := resourcesDir + filename
@@ -233,9 +233,13 @@ func (g *Graph) countConnectedComponents() int {
 
 func (g *Graph) countVerticesAndEdges() (int, int) {
 	cntVertices, cntEdges := 0, 0
-	for _, neighbours := range g.adjList {
-		cntEdges++
-		cntVertices += len(neighbours)
+	for v, neighbours := range g.adjList {
+		cntVertices++
+		for u := range neighbours {
+			if g.isDirected || v <= u {
+				cntEdges++
+			}
+		}
 	}
 	return cntVertices, cntEdges
 }
@@ -251,8 +255,8 @@ func (g *Graph) isAlmostTree() (bool, error) {
 	for v := range g.adjList {
 		gCopy := NewGraphCopy(*g)
 		gCopy.RemoveVertex(v)
-		vertices, edges := g.countVerticesAndEdges()
-		if vertices == edges+1 && g.countConnectedComponents() == 1 {
+		vertices, edges := gCopy.countVerticesAndEdges()
+		if vertices == edges+1 && gCopy.countConnectedComponents() == 1 {
 			return true, nil
 		}
 	}
@@ -284,58 +288,43 @@ func (g *Graph) isDirectedGraphTheTreeOrForest() (string, error) {
 		return "", errors.New("graph is not directed (граф не ориентированный)")
 	}
 
-	roots := make([]string, 0)
-	for root := range g.adjList {
-		isRoot := true
-		for other := range g.adjList {
-			if _, existEdge := g.adjList[other][root]; existEdge {
-				isRoot = false
-				break
-			}
-		}
-		if isRoot {
-			roots = append(roots, root)
+	cntIn := make(map[string]int)
+
+	for _, neighbours := range g.adjList {
+		for u := range neighbours {
+			cntIn[u]++
 		}
 	}
 
-	vertices, edges := g.countVerticesAndEdges()
-	if len(roots) == 1 && g.countConnectedComponents() == 1 && vertices == edges+1 {
-		return "Tree", nil
-	}
-
-	g.used = make(map[string]bool)
-	for _, root := range roots {
-		if !g.isWithoutCyclesBFS(root) {
+	for _, cnt := range cntIn {
+		if cnt > 1 {
 			return "Not a tree and not a forest", nil
 		}
 	}
-	return "Forest", nil
+
+	isTree := false
+
+	for v, _ := range g.adjList {
+		g.UsedClear()
+		isWithoutCycle := g.isWithoutCyclesBFS(v)
+		if !isWithoutCycle {
+			return "Not a tree and not a forest", nil
+		}
+		if len(g.used) == len(g.adjList) {
+			isTree = true
+		}
+	}
+
+	if isTree {
+		return "Tree", nil
+	} else {
+		return "Forest", nil
+	}
 }
 
 type Item struct {
-	vertex string
-	weight int
-}
-
-type PriorityQueue []Item
-
-func (pq PriorityQueue) Len() int { return len(pq) }
-func (pq PriorityQueue) Less(i, j int) bool {
-	return pq[i].weight < pq[j].weight
-}
-func (pq PriorityQueue) Swap(i, j int) { pq[i], pq[j] = pq[j], pq[i] }
-
-func (pq *PriorityQueue) Push(x interface{}) {
-	item := x.(Item)
-	*pq = append(*pq, item)
-}
-
-func (pq *PriorityQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	*pq = old[0 : n-1]
-	return item
+	previous, current string
+	weight            int
 }
 
 // MSTPrime => task 7: Каркас III
@@ -346,40 +335,41 @@ func (g *Graph) MSTPrime() (*Graph, int, error) {
 	}
 
 	g.UsedClear()
+	if g.countConnectedComponents() > 1 {
+		return nil, -1, errors.New("graph is not connected")
+	}
+
+	g.UsedClear()
 	g.MinEdgeClear()
 	g.minEdgeMakeDistInfinity()
 	var start string
 	for v := range g.adjList {
 		start = v
-		g.used[start] = true
 		g.minEdge[start] = 0
 		break
 	}
 
 	totalWeight := 0
 	MST := NewEmptyGraph(false)
-	pq := &PriorityQueue{}
-	heap.Init(pq)
-	heap.Push(pq, Item{vertex: start, weight: 0})
-	fromVertex := ""
+	priorityQueue := pq.New()
+	priorityQueue.Insert(Item{previous: "", current: start, weight: 0}, 0)
 
-	for pq.Len() > 0 {
-		item := pq.Pop().(Item)
-		if g.used[item.vertex] {
+	for priorityQueue.Len() > 0 {
+		el, _ := priorityQueue.Pop()
+		item := el.(Item)
+		if g.used[item.current] {
 			continue
 		}
-		toVertex := item.vertex
-		g.used[item.vertex] = true
+		g.used[item.current] = true
 		totalWeight += item.weight
-		if fromVertex != "" {
-			MST.AddEdge(fromVertex, toVertex, item.weight)
+		if item.previous != "" {
+			MST.AddEdge(item.previous, item.current, item.weight)
 		}
-		fromVertex = item.vertex
 
-		for to, w := range g.adjList[item.vertex] {
+		for to, w := range g.adjList[item.current] {
 			if !g.used[to] && w < g.minEdge[to] {
-				g.minEdge[to] = w
-				pq.Push(Item{vertex: to, weight: w})
+				g.minEdge[to] = min(g.minEdge[to], w)
+				priorityQueue.Insert(Item{previous: item.current, current: to, weight: w}, float64(g.minEdge[to]))
 			}
 		}
 	}

@@ -100,3 +100,137 @@ func TestGraph_RemoveEdgeNonExistent(t *testing.T) {
 		t.Errorf("Ожидалось, что количество рёбер для A останется 1, получено %d", len(graph.adjList["A"]))
 	}
 }
+
+// task 5: удалить вершину из неориентированного графа и получить дерево
+func TestGraph_isAlmostTree1(t *testing.T) {
+	graph := NewEmptyGraph(false)
+	graph.AddEdge("1", "2", 1)
+	graph.AddEdge("2", "3", 1)
+	graph.AddEdge("1", "3", 1)
+
+	ok, _ := graph.isAlmostTree()
+	if ok == false {
+		t.Error("Полученный ответ нет, хотя можем удалить вершину 1 и получить дерево.")
+	}
+}
+
+func TestGraph_isAlmostTree2(t *testing.T) {
+	graph := NewEmptyGraph(false)
+	graph.AddEdge("1", "2", 1)
+	graph.AddEdge("3", "2", 1)
+	graph.AddEdge("3", "4", 1)
+	graph.AddEdge("1", "3", 1)
+	graph.AddEdge("1", "4", 1)
+
+	ok, _ := graph.isAlmostTree()
+	if ok != true {
+		t.Error("Полученный ответ нет, хотя можем удалить вершину 3 и получить дерево.")
+	}
+}
+
+func TestGraph_isAlmostTree3(t *testing.T) {
+	graph := NewEmptyGraph(false)
+	graph.AddEdge("1", "2", 1)
+	graph.AddEdge("3", "2", 1)
+	graph.AddEdge("3", "4", 1)
+	graph.AddEdge("1", "3", 1)
+	graph.AddEdge("1", "4", 1)
+	graph.AddEdge("2", "4", 1)
+
+	ok, _ := graph.isAlmostTree()
+	if ok == true {
+		t.Error("Полученный ответ да, хотя никак не можем получить дерево удалением вершины")
+	}
+}
+
+// task 6: проверить, является ли орграф деревом или лесом
+func TestGraph_isDirectedGraphTheTreeOrForest1(t *testing.T) {
+	dirgraph := NewEmptyGraph(true)
+	dirgraph.AddEdge("1", "2", 1)
+	dirgraph.AddEdge("2", "4", 1)
+	dirgraph.AddEdge("1", "3", 1)
+	dirgraph.AddEdge("2", "5", 1)
+
+	answer, err := dirgraph.isDirectedGraphTheTreeOrForest()
+	if err != nil {
+		t.Error(err)
+	}
+	if answer != "Tree" {
+		t.Errorf("this is a tree, but answer is %s\n", answer)
+	} else {
+		t.Log(answer)
+	}
+}
+
+func TestGraph_isDirectedGraphTheTreeOrForest2(t *testing.T) {
+	dirgraph := NewEmptyGraph(true)
+	dirgraph.AddEdge("1", "2", 1)
+	dirgraph.AddEdge("2", "3", 1)
+	dirgraph.AddEdge("3", "1", 1)
+
+	answer, err := dirgraph.isDirectedGraphTheTreeOrForest()
+	if err != nil {
+		t.Error(err)
+	}
+	if answer != "Not a tree and not a forest" {
+		t.Errorf("True answer: Not a tree and not a forest. But we get: %s\n", answer)
+	} else {
+		t.Log(answer)
+	}
+}
+
+func TestGraph_isDirectedGraphTheTreeOrForest3(t *testing.T) {
+	dirgraph := NewEmptyGraph(true)
+	dirgraph.AddEdge("1", "2", 1)
+	dirgraph.AddEdge("3", "4", 1)
+	dirgraph.AddVertex("5")
+
+	answer, err := dirgraph.isDirectedGraphTheTreeOrForest()
+	if err != nil {
+		t.Error(err)
+	}
+	if answer != "Forest" {
+		t.Errorf("Forest, but answer is %s\n", answer)
+	}
+	t.Log(answer)
+}
+
+func TestGraph_isDirectedGraphTheTreeOrForest4(t *testing.T) {
+	dirgraph := NewEmptyGraph(true)
+	dirgraph.AddEdge("2", "1", 1)
+	dirgraph.AddEdge("3", "1", 1)
+
+	answer, err := dirgraph.isDirectedGraphTheTreeOrForest()
+	if err != nil {
+		t.Error(err)
+	}
+	if answer != "Not a tree and not a forest" {
+		t.Errorf("Not a tree and not a forest, but answer is %s\n", answer)
+	}
+	t.Log(answer)
+}
+
+// Task 7: MST (Prime)
+func TestGraph_MSTPrime1(t *testing.T) {
+	graph := NewEmptyGraph(false)
+	graph.AddEdge("a", "b", 1)
+	graph.AddEdge("a", "c", 2)
+	graph.AddEdge("b", "d", 1)
+	graph.AddEdge("c", "d", 1)
+	graph.AddEdge("d", "e", 1)
+	graph.AddEdge("d", "f", 50)
+	graph.AddEdge("e", "f", 1)
+	graph.AddEdge("f", "g", 1)
+	graph.AddEdge("e", "g", 3)
+
+	mst, totalWeight, err := graph.MSTPrime()
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log("totalWeight = ", totalWeight)
+	t.Log("MST:\n")
+	mst.PrintAdjList()
+	if totalWeight != (1 + 1 + 1 + 1 + 1 + 1) {
+		t.Error("wrong weight: true weight is 6, but the answer is ", totalWeight)
+	}
+}
