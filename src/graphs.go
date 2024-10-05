@@ -2,19 +2,42 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/jupp0r/go-priority-queue"
+	"math"
 	"os"
 )
+
+const resourcesDir = "C:\\Users\\User\\Desktop\\SSUhomework\\GraphsGoSSU\\resources\\"
 
 type Graph struct {
 	adjList    map[string]map[string]int
 	isDirected bool
+	used       map[string]bool
+	minEdge    map[string]int
 }
 
 func NewEmptyGraph(directed bool) *Graph {
 	return &Graph{
 		adjList:    make(map[string]map[string]int),
 		isDirected: directed,
+		used:       make(map[string]bool),
+		minEdge:    make(map[string]int),
+	}
+}
+
+func (g *Graph) UsedClear() {
+	g.used = make(map[string]bool)
+}
+
+func (g *Graph) MinEdgeClear() {
+	g.minEdge = make(map[string]int)
+}
+
+func (g *Graph) minEdgeMakeDistInfinity() {
+	for v := range g.adjList {
+		g.minEdge[v] = math.MaxInt
 	}
 }
 
@@ -32,8 +55,6 @@ func NewGraphCopy(g Graph) *Graph {
 
 	return newGraph
 }
-
-const resourcesDir = "C:\\Users\\User\\Desktop\\Вуз домашка\\GraphsGoSSU\\resources\\"
 
 func NewGraphFromFileJSON(filename string) (*Graph, error) {
 	filePath := resourcesDir + filename
@@ -187,4 +208,171 @@ func (g *Graph) isSubgraphOf(otherG *Graph) bool {
 		}
 	}
 	return true
+}
+
+func (g *Graph) dfs(v string) {
+	g.used[v] = true
+	for u := range g.adjList[v] {
+		if !g.used[u] {
+			g.dfs(u)
+		}
+	}
+}
+
+func (g *Graph) countConnectedComponents() int {
+	g.used = make(map[string]bool)
+	cnt := 0
+	for v := range g.adjList {
+		if !g.used[v] {
+			cnt++
+			g.dfs(v)
+		}
+	}
+	return cnt
+}
+
+func (g *Graph) countVerticesAndEdges() (int, int) {
+	cntVertices, cntEdges := 0, 0
+	for v, neighbours := range g.adjList {
+		cntVertices++
+		for u := range neighbours {
+			if g.isDirected || v <= u {
+				cntEdges++
+			}
+		}
+	}
+	return cntVertices, cntEdges
+}
+
+// 19.	Проверить, можно ли из графа удалить какую-либо вершину так, чтобы получилось дерево.
+func (g *Graph) isAlmostTree() (bool, error) {
+	if g.isDirected == true {
+		return false, errors.New("graph is directed")
+	}
+	if g.countConnectedComponents() > 2 {
+		return false, errors.New("too much connected components")
+	}
+	for v := range g.adjList {
+		gCopy := NewGraphCopy(*g)
+		gCopy.RemoveVertex(v)
+		vertices, edges := gCopy.countVerticesAndEdges()
+		if vertices == edges+1 && gCopy.countConnectedComponents() == 1 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (g *Graph) isWithoutCyclesBFS(v string) bool {
+	g.used[v] = true
+	queue := make([]string, 0)
+	queue = append(queue, v)
+	for len(queue) > 0 {
+		from := queue[0]
+		queue = queue[1:]
+		for u := range g.adjList[from] {
+			if !g.used[u] {
+				g.used[u] = true
+				queue = append(queue, u)
+			} else {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// 22.	* Проверить, является ли орграф деревом, или лесом, или не является ни тем, ни другим.
+func (g *Graph) isDirectedGraphTheTreeOrForest() (string, error) {
+	if !g.isDirected {
+		return "", errors.New("graph is not directed (граф не ориентированный)")
+	}
+
+	cntIn := make(map[string]int)
+
+	for _, neighbours := range g.adjList {
+		for u := range neighbours {
+			cntIn[u]++
+		}
+	}
+
+	for _, cnt := range cntIn {
+		if cnt > 1 {
+			return "Not a tree and not a forest", nil
+		}
+	}
+
+	isTree := false
+
+	for v, _ := range g.adjList {
+		g.UsedClear()
+		isWithoutCycle := g.isWithoutCyclesBFS(v)
+		if !isWithoutCycle {
+			return "Not a tree and not a forest", nil
+		}
+		if len(g.used) == len(g.adjList) {
+			isTree = true
+		}
+	}
+
+	if isTree {
+		return "Tree", nil
+	} else {
+		return "Forest", nil
+	}
+}
+
+type Item struct {
+	previous, current string
+	weight            int
+}
+
+// MSTPrime => task 7: Каркас III
+// Дан взвешенный неориентированный граф из N вершни и M ребер. Найти MST с помощью алгоритма Прима
+func (g *Graph) MSTPrime() (*Graph, int, error) {
+	if g.isDirected {
+		return nil, -1, errors.New("graph is directed")
+	}
+
+	g.UsedClear()
+	if g.countConnectedComponents() > 1 {
+		return nil, -1, errors.New("graph is not connected")
+	}
+
+	g.UsedClear()
+	g.MinEdgeClear()
+	g.minEdgeMakeDistInfinity()
+	var start string
+	for v := range g.adjList {
+		start = v
+		g.minEdge[start] = 0
+		break
+	}
+
+	totalWeight := 0
+	MST := NewEmptyGraph(false)
+	priorityQueue := pq.New()
+	priorityQueue.Insert(Item{previous: "", current: start, weight: 0}, 0)
+
+	for priorityQueue.Len() > 0 {
+		el, _ := priorityQueue.Pop()
+		item := el.(Item)
+		if g.used[item.current] {
+			continue
+		}
+		g.used[item.current] = true
+		totalWeight += item.weight
+		if item.previous != "" {
+			MST.AddEdge(item.previous, item.current, item.weight)
+		}
+
+		for to, w := range g.adjList[item.current] {
+			if !g.used[to] && w < g.minEdge[to] {
+				g.minEdge[to] = min(g.minEdge[to], w)
+				priorityQueue.Insert(Item{previous: item.current, current: to, weight: w}, float64(g.minEdge[to]))
+			}
+		}
+	}
+
+	return MST, totalWeight, nil
 }
