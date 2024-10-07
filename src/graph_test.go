@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestGraph_AddVertex(t *testing.T) {
 	graph := NewEmptyGraph(false)
@@ -232,5 +235,27 @@ func TestGraph_MSTPrime1(t *testing.T) {
 	mst.PrintAdjList()
 	if totalWeight != (1 + 1 + 1 + 1 + 1 + 1) {
 		t.Error("wrong weight: true weight is 6, but the answer is ", totalWeight)
+	}
+}
+
+// Task 8: radius
+func TestGraph_GetRadius(t *testing.T) {
+	graph := NewEmptyGraph(false)
+	graph.AddEdge("a", "b", 1)
+	graph.AddEdge("a", "c", 2)
+	graph.AddEdge("b", "d", 1)
+	graph.AddEdge("c", "d", 1)
+	graph.AddEdge("d", "e", 1)
+	graph.AddEdge("d", "f", 50)
+	graph.AddEdge("e", "f", 1)
+	graph.AddEdge("f", "g", 1)
+	graph.AddEdge("e", "g", 3)
+
+	from, to, radius := graph.GetRadius()
+	if !(radius == 3 && (from == "d" && to == "g" || from == "e" && to == "a")) {
+		t.Errorf("the result is: radius = %d, from = %s, to = %s,"+
+			" but true answer is: radius = 3, from = d and to = e or from = e and to = a", radius, from, to)
+	} else {
+		fmt.Printf("the result is right and equals: radius = %d, from = %s, to = %s\n", radius, from, to)
 	}
 }

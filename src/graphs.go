@@ -10,6 +10,8 @@ import (
 )
 
 const resourcesDir = "C:\\Users\\User\\Desktop\\SSUhomework\\GraphsGoSSU\\resources\\"
+const INF = math.MaxInt64
+const NEGATIVE_INF = math.MinInt64
 
 type Graph struct {
 	adjList    map[string]map[string]int
@@ -37,7 +39,7 @@ func (g *Graph) MinEdgeClear() {
 
 func (g *Graph) minEdgeMakeDistInfinity() {
 	for v := range g.adjList {
-		g.minEdge[v] = math.MaxInt
+		g.minEdge[v] = INF
 	}
 }
 
@@ -375,4 +377,73 @@ func (g *Graph) MSTPrime() (*Graph, int, error) {
 	}
 
 	return MST, totalWeight, nil
+}
+
+// Алгоритм поиска расстояний между всеми парами вершин, для task 8 #10
+func (g *Graph) FloydWarshall() map[string]map[string]int {
+	n := len(g.adjList)
+	dist := make(map[string]map[string]int, n)
+	for v := range g.adjList {
+		dist[v] = make(map[string]int, n)
+		for u := range g.adjList {
+			if w, exist := g.adjList[v][u]; exist {
+				dist[v][u] = w
+			} else if v == u {
+				dist[v][u] = 0
+			} else {
+				dist[v][u] = INF
+			}
+		}
+	}
+
+	//k - промежуточная вершина на пути между v и u
+	for k := range g.adjList {
+		for v := range g.adjList {
+			for u := range g.adjList {
+				if dist[v][k] < INF && dist[k][u] < INF {
+					dist[v][u] = min(dist[v][u], dist[v][k]+dist[k][u])
+				}
+			}
+		}
+	}
+
+	return dist
+}
+
+// GetRadius task 8: "Вес IV a"
+// 10. Эксцентриситет вершины — максимальное расстояние из всех минимальных расстояний
+// от других вершин до данной вершины.
+// Найти радиус графа — минимальный из эксцентриситетов его вершин
+
+type maxVertexDist struct {
+	from string
+	to   string
+	dist int
+}
+
+func (g *Graph) GetRadius() (string, string, int) {
+	dist := g.FloydWarshall()
+
+	//TODO: Нужна ли проверка на то, что если нашлось в dist расстояние INF, то граф не связный и радиус = ?
+
+	eccentricities := make(map[string]maxVertexDist, len(dist))
+	for v, neighbours := range dist {
+		maxDist := maxVertexDist{from: v, to: v, dist: NEGATIVE_INF}
+		for u, curDist := range neighbours {
+			if curDist > maxDist.dist {
+				maxDist.to = u
+				maxDist.dist = curDist
+			}
+		}
+		eccentricities[v] = maxDist
+	}
+
+	minEccentricity := maxVertexDist{dist: INF}
+	for _, struc := range eccentricities {
+		if struc.dist < minEccentricity.dist {
+			minEccentricity = struc
+		}
+	}
+
+	return minEccentricity.from, minEccentricity.to, minEccentricity.dist
 }
