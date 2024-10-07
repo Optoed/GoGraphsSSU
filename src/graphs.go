@@ -415,7 +415,7 @@ func (g *Graph) FloydWarshall() map[string]map[string]int {
 // от других вершин до данной вершины.
 // Найти радиус графа — минимальный из эксцентриситетов его вершин
 
-type maxVertexDist struct {
+type EdgeStruct struct {
 	from string
 	to   string
 	dist int
@@ -424,11 +424,9 @@ type maxVertexDist struct {
 func (g *Graph) GetRadius() (string, string, int) {
 	dist := g.FloydWarshall()
 
-	//TODO: Нужна ли проверка на то, что если нашлось в dist расстояние INF, то граф не связный и радиус = ?
-
-	eccentricities := make(map[string]maxVertexDist, len(dist))
+	eccentricities := make(map[string]EdgeStruct, len(dist))
 	for v, neighbours := range dist {
-		maxDist := maxVertexDist{from: v, to: v, dist: NEGATIVE_INF}
+		maxDist := EdgeStruct{from: v, to: v, dist: NEGATIVE_INF}
 		for u, curDist := range neighbours {
 			if curDist > maxDist.dist {
 				maxDist.to = u
@@ -438,7 +436,7 @@ func (g *Graph) GetRadius() (string, string, int) {
 		eccentricities[v] = maxDist
 	}
 
-	minEccentricity := maxVertexDist{dist: INF}
+	minEccentricity := EdgeStruct{dist: INF}
 	for _, struc := range eccentricities {
 		if struc.dist < minEccentricity.dist {
 			minEccentricity = struc
@@ -446,4 +444,58 @@ func (g *Graph) GetRadius() (string, string, int) {
 	}
 
 	return minEccentricity.from, minEccentricity.to, minEccentricity.dist
+}
+
+type VertexWeight struct {
+	weight int
+	vertex string
+}
+
+// task9 : 12. Вывести кратчайший путь из вершины u до вершины v.
+func (g *Graph) Dijkstra(u, v string) ([]string, int, error) {
+	d := make(map[string]int, len(g.adjList))
+	for vertex := range g.adjList {
+		d[vertex] = INF
+	}
+	d[u] = 0
+
+	path := make(map[string]string)
+
+	priorityQueue := pq.New()
+	priorityQueue.Insert(VertexWeight{0, u}, 0)
+
+	for priorityQueue.Len() > 0 {
+		topElement, _ := priorityQueue.Pop()
+		top := topElement.(VertexWeight)
+		if top.weight > d[top.vertex] {
+			continue
+		}
+		for to := range g.adjList[top.vertex] {
+			if d[top.vertex]+g.adjList[top.vertex][to] < d[to] {
+				d[to] = d[top.vertex] + g.adjList[top.vertex][to]
+				path[to] = top.vertex
+				priorityQueue.Insert(VertexWeight{d[to], to}, float64(d[to]))
+			}
+		}
+	}
+
+	if d[v] == INF {
+		return nil, INF, errors.New("there is no path from u to v")
+	}
+
+	answerPath := make([]string, 0)
+	curVertex := v
+	for path[curVertex] != "" {
+		answerPath = append(answerPath, curVertex)
+		curVertex = path[curVertex]
+		if path[curVertex] == "" {
+			answerPath = append(answerPath, curVertex)
+		}
+	}
+
+	for i, j := 0, len(answerPath)-1; i < j; i, j = i+1, j-1 {
+		answerPath[i], answerPath[j] = answerPath[j], answerPath[i]
+	}
+
+	return answerPath, d[v], nil
 }

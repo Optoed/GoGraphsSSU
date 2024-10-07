@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 )
 
@@ -258,4 +259,53 @@ func TestGraph_GetRadius(t *testing.T) {
 	} else {
 		fmt.Printf("the result is right and equals: radius = %d, from = %s, to = %s\n", radius, from, to)
 	}
+}
+
+// task 9: dijkstra
+func TestGraph1_Dijkstra(t *testing.T) {
+	graph := NewEmptyGraph(false)
+	graph.AddEdge("a", "b", 1)
+	graph.AddEdge("a", "c", 2)
+	graph.AddEdge("b", "d", 1)
+	graph.AddEdge("c", "d", 1)
+	graph.AddEdge("d", "e", 1)
+	graph.AddEdge("d", "f", 50)
+	graph.AddEdge("e", "f", 1)
+	graph.AddEdge("f", "g", 1)
+	graph.AddEdge("e", "g", 3)
+
+	path, dist, err := graph.Dijkstra("g", "a")
+	if err != nil {
+		t.Error("Expected path = {g, f, e, d, b, a}, dist = 5, but catch error:" + err.Error())
+	}
+
+	ansString := "Expected path = {g, f, e, d, b, a}, dist = 5, we got: path = {"
+	for i, el := range path {
+		ansString += el
+		if i != len(path)-1 {
+			ansString += ", "
+		} else {
+			ansString += "}, "
+		}
+	}
+	ansString += "dist = " + strconv.Itoa(dist)
+
+	checkPath := true
+	truePath := []string{"g", "f", "e", "d", "b", "a"}
+	if len(path) == len(truePath) {
+		for i := range len(path) {
+			if truePath[i] != path[i] {
+				checkPath = false
+				break
+			}
+		}
+	} else {
+		checkPath = false
+	}
+
+	if !checkPath {
+		t.Error(ansString)
+	}
+
+	fmt.Println(ansString)
 }
