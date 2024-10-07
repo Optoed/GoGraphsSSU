@@ -40,7 +40,10 @@ func StartCLI() {
 		fmt.Println("16. is_dirgraph_tree_or_forest")
 		//task7: MST with Prime's algorithm
 		fmt.Println("17. mst <undirected_graphID")
-		fmt.Println("18. exit")
+		//task8: radius
+		fmt.Println("18. radius <graphID>")
+		//exit
+		fmt.Println("19. exit")
 
 		fmt.Print("\nВведите команду: ")
 		command, _ := reader.ReadString('\n')
@@ -250,6 +253,14 @@ func StartCLI() {
 			}
 			fmt.Printf("mst with total weight = %d:\n", totalWeight)
 			mst.PrintAdjList()
+
+		case strings.HasPrefix(command, "radius"):
+			from, to, radius := graphs[activeGraphID].GetRadius()
+			if radius == INF {
+				fmt.Println("radius = INF, because graph is not connected")
+				continue
+			}
+			fmt.Printf("raduis = %d, from (vertex) = %s, to (vertex) = %s\n", radius, from, to)
 
 		case command == "exit":
 			fmt.Println("Завершение программы.")

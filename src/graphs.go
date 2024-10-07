@@ -10,6 +10,8 @@ import (
 )
 
 const resourcesDir = "C:\\Users\\User\\Desktop\\SSUhomework\\GraphsGoSSU\\resources\\"
+const INF = math.MaxInt64
+const NEGATIVE_INF = math.MinInt64
 
 type Graph struct {
 	adjList    map[string]map[string]int
@@ -37,7 +39,7 @@ func (g *Graph) MinEdgeClear() {
 
 func (g *Graph) minEdgeMakeDistInfinity() {
 	for v := range g.adjList {
-		g.minEdge[v] = math.MaxInt
+		g.minEdge[v] = INF
 	}
 }
 
@@ -375,4 +377,125 @@ func (g *Graph) MSTPrime() (*Graph, int, error) {
 	}
 
 	return MST, totalWeight, nil
+}
+
+// Алгоритм поиска расстояний между всеми парами вершин, для task 8 #10
+func (g *Graph) FloydWarshall() map[string]map[string]int {
+	n := len(g.adjList)
+	dist := make(map[string]map[string]int, n)
+	for v := range g.adjList {
+		dist[v] = make(map[string]int, n)
+		for u := range g.adjList {
+			if w, exist := g.adjList[v][u]; exist {
+				dist[v][u] = w
+			} else if v == u {
+				dist[v][u] = 0
+			} else {
+				dist[v][u] = INF
+			}
+		}
+	}
+
+	//k - промежуточная вершина на пути между v и u
+	for k := range g.adjList {
+		for v := range g.adjList {
+			for u := range g.adjList {
+				if dist[v][k] < INF && dist[k][u] < INF {
+					dist[v][u] = min(dist[v][u], dist[v][k]+dist[k][u])
+				}
+			}
+		}
+	}
+
+	return dist
+}
+
+// GetRadius task 8: "Вес IV a"
+// 10. Эксцентриситет вершины — максимальное расстояние из всех минимальных расстояний
+// от других вершин до данной вершины.
+// Найти радиус графа — минимальный из эксцентриситетов его вершин
+
+type EdgeStruct struct {
+	from string
+	to   string
+	dist int
+}
+
+func (g *Graph) GetRadius() (string, string, int) {
+	dist := g.FloydWarshall()
+
+	eccentricities := make(map[string]EdgeStruct, len(dist))
+	for v, neighbours := range dist {
+		maxDist := EdgeStruct{from: v, to: v, dist: NEGATIVE_INF}
+		for u, curDist := range neighbours {
+			if curDist > maxDist.dist {
+				maxDist.to = u
+				maxDist.dist = curDist
+			}
+		}
+		eccentricities[v] = maxDist
+	}
+
+	minEccentricity := EdgeStruct{dist: INF}
+	for _, struc := range eccentricities {
+		if struc.dist < minEccentricity.dist {
+			minEccentricity = struc
+		}
+	}
+
+	return minEccentricity.from, minEccentricity.to, minEccentricity.dist
+}
+
+type VertexWeight struct {
+	weight int
+	vertex string
+}
+
+// task9 : 12. Вывести кратчайший путь из вершины u до вершины v.
+func (g *Graph) Dijkstra(u, v string) ([]string, int, error) {
+	d := make(map[string]int, len(g.adjList))
+	for vertex := range g.adjList {
+		d[vertex] = INF
+	}
+	d[u] = 0
+
+	path := make(map[string]string)
+
+	priorityQueue := pq.New()
+	priorityQueue.Insert(VertexWeight{0, u}, 0)
+
+	for priorityQueue.Len() > 0 {
+		topElement, _ := priorityQueue.Pop()
+		top := topElement.(VertexWeight)
+		if top.weight > d[top.vertex] {
+			continue
+		}
+		for to := range g.adjList[top.vertex] {
+			if d[top.vertex]+g.adjList[top.vertex][to] < d[to] {
+				d[to] = d[top.vertex] + g.adjList[top.vertex][to]
+				path[to] = top.vertex
+				priorityQueue.Insert(VertexWeight{d[to], to}, float64(d[to]))
+			}
+		}
+	}
+
+	if d[v] == INF {
+		return nil, INF, errors.New("there is no path from u to v")
+	}
+
+	answerPath := make([]string, 0)
+	curVertex := v
+	for path[curVertex] != "" {
+		answerPath = append(answerPath, curVertex)
+		curVertex = path[curVertex]
+		if path[curVertex] == "" {
+			answerPath = append(answerPath, curVertex)
+		}
+	}
+
+	for i, j := 0, len(answerPath)-1; i < j; i, j = i+1, j-1 {
+		answerPath[i], answerPath[j] = answerPath[j], answerPath[i]
+	}
+
+	return answerPath, d[v], nil
 }
