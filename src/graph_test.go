@@ -261,8 +261,8 @@ func TestGraph_GetRadius(t *testing.T) {
 	}
 }
 
-// task 9: dijkstra
-func TestGraph1_Dijkstra(t *testing.T) {
+// task 9: FordBellman
+func TestGraph1_FordBellman(t *testing.T) {
 	graph := NewEmptyGraph(false)
 	graph.AddEdge("a", "b", 1)
 	graph.AddEdge("a", "c", 2)
@@ -274,7 +274,7 @@ func TestGraph1_Dijkstra(t *testing.T) {
 	graph.AddEdge("f", "g", 1)
 	graph.AddEdge("e", "g", 3)
 
-	path, dist, err := graph.Dijkstra("g", "a")
+	path, dist, err := graph.BellmanFord("g", "a")
 	if err != nil {
 		t.Error("Expected path = {g, f, e, d, b, a}, dist = 5, but catch error:" + err.Error())
 	}
@@ -284,10 +284,9 @@ func TestGraph1_Dijkstra(t *testing.T) {
 		ansString += el
 		if i != len(path)-1 {
 			ansString += ", "
-		} else {
-			ansString += "}, "
 		}
 	}
+	ansString += "}, "
 	ansString += "dist = " + strconv.Itoa(dist)
 
 	checkPath := true
@@ -308,4 +307,20 @@ func TestGraph1_Dijkstra(t *testing.T) {
 	}
 
 	fmt.Println(ansString)
+}
+
+// task 10 (dist between all pairs)
+func TestGraph_PrintFloydWarshall(t *testing.T) {
+	graph := NewEmptyGraph(false)
+	graph.AddEdge("a", "b", 1)
+	graph.AddEdge("a", "c", 2)
+	graph.AddEdge("b", "d", 1)
+	graph.AddEdge("c", "d", 1)
+	graph.AddEdge("d", "e", 1)
+	graph.AddEdge("d", "f", 50)
+	graph.AddEdge("e", "f", 1)
+	graph.AddEdge("f", "g", 1)
+	graph.AddEdge("e", "g", 3)
+
+	graph.PrintFloydWarshall()
 }
