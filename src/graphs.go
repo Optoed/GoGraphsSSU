@@ -381,7 +381,7 @@ func (g *Graph) MSTPrime() (*Graph, int, error) {
 }
 
 // Алгоритм Флойда поиска расстояний между всеми парами вершин, для task 10 №9
-func (g *Graph) FloydWarshall() map[string]map[string]int {
+func (g *Graph) FloydWarshall() (map[string]map[string]int, bool) {
 	n := len(g.adjList)
 	dist := make(map[string]map[string]int, n)
 	for v := range g.adjList {
@@ -408,12 +408,23 @@ func (g *Graph) FloydWarshall() map[string]map[string]int {
 		}
 	}
 
-	return dist
+	//проверка на отрицательный цикл
+	for v := range g.adjList {
+		if dist[v][v] < 0 {
+			return dist, true
+		}
+	}
+
+	return dist, false
 }
 
 // task10 9.Вывести длины кратчайших путей для всех пар вершин.
 func (g *Graph) PrintFloydWarshall() {
-	dist := g.FloydWarshall()
+	dist, hasNegativeCycles := g.FloydWarshall()
+	if hasNegativeCycles {
+		fmt.Println("graph has a negative cycle")
+		return
+	}
 	fmt.Print("from\t")
 	vertices := make([]string, 0)
 	for el := range dist {
