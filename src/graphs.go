@@ -502,7 +502,7 @@ type VertexWeight struct {
 	vertex string
 }
 
-// Алгоритм Дейкстры для task 8: 10
+// Алгоритм Дейкстры
 func (g *Graph) Dijkstra(u string) map[string]int {
 	d := make(map[string]int, len(g.adjList))
 	for vertex := range g.adjList {
