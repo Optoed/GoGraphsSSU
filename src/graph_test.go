@@ -324,3 +324,25 @@ func TestGraph_PrintFloydWarshall(t *testing.T) {
 
 	graph.PrintFloydWarshall()
 }
+
+// task 11 (Алгоритм Форда-Фалкерсона поиска максимального потока
+func TestGraph_FordFalkerson(t *testing.T) {
+	// Пример использования
+	n := 6 // количество вершин
+	graph := NewMaxFlowFordFulkerson(n)
+
+	// Добавление рёбер с их ёмкостями
+	graph.AddEdge(1, 2, 30)
+	graph.AddEdge(1, 3, 40)
+	graph.AddEdge(1, 4, 20)
+	graph.AddEdge(2, 3, 50)
+	graph.AddEdge(2, 5, 40)
+	graph.AddEdge(3, 4, 20)
+	graph.AddEdge(3, 5, 30)
+	graph.AddEdge(4, 5, 30)
+
+	s := 1  // исток
+	to := 5 // сток
+
+	fmt.Printf("Максимальный поток: %d\n", graph.MaxFlow(s, to))
+}
