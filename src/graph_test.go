@@ -326,7 +326,7 @@ func TestGraph_PrintFloydWarshall(t *testing.T) {
 }
 
 // task 11 (Алгоритм Форда-Фалкерсона поиска максимального потока
-func TestGraph_FordFalkerson(t *testing.T) {
+func TestGraph_FordFulkerson(t *testing.T) {
 	// Пример использования
 	n := 6 // количество вершин
 	graph := NewMaxFlowFordFulkerson(n)
